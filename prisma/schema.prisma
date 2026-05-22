@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum IntegrationType {
+  REST
+  SOAP
+}
+
+enum SyncJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum HealthStatus {
+  UP
+  DOWN
+  UNKNOWN
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  reference    String        @unique
+  travelerName String
+  destination  String
+  checkIn      DateTime
+  checkOut     DateTime
+  amountCents  Int
+  currency     String        @default("BRL")
+  status       BookingStatus @default(PENDING)
+  providerId   String?
+  provider     Provider?     @relation(fields: [providerId], references: [id])
+  syncJobs     SyncJob[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Provider {
+  id               String          @id @default(cuid())
+  name             String
+  slug             String          @unique
+  integrationType  IntegrationType
+  baseUrl          String?
+  active           Boolean         @default(true)
+  lastHealthAt     DateTime?
+  lastHealthStatus HealthStatus?
+  bookings         Booking[]
+  syncJobs         SyncJob[]
+  createdAt        DateTime        @default(now())
+}
+
+model SyncJob {
+  id          String        @id @default(cuid())
+  bookingId   String
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  providerId  String
+  provider    Provider      @relation(fields: [providerId], references: [id])
+  status      SyncJobStatus @default(QUEUED)
+  attempts    Int           @default(0)
+  lastError   String?
+  createdAt   DateTime      @default(now())
+  completedAt DateTime?
+}
+
+model IdempotencyKey {
+  key       String   @id
+  response  String
+  createdAt DateTime @default(now())
+}
+
+model WebhookEvent {
+  idempotencyKey String   @id
+  processedAt    DateTime @default(now())
+}

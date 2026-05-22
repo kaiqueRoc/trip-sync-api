@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      DATABASE_URL: file:/app/prisma/dev.db
+      PORT: 3333
+    volumes:
+      - ./prisma:/app/prisma

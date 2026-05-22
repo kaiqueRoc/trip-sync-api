@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: kaiqueRoc/trip-sync-contracts
+          path: trip-sync-contracts
+        continue-on-error: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: trip-sync-api/package-lock.json
+
+      - working-directory: trip-sync-api
+        run: |
+          if [ -d ../trip-sync-contracts ]; then
+            npm pkg set dependencies.@trip-sync/contracts="file:../trip-sync-contracts"
+          fi
+          npm ci
+          npm run db:generate
+          npm run lint
+          npm run docs:check
