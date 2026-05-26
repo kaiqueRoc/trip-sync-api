@@ -12,22 +12,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
+      - name: Checkout contracts
+        uses: actions/checkout@v4
         with:
           repository: kaiqueRoc/trip-sync-contracts
           path: trip-sync-contracts
+          ref: main
         continue-on-error: true
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: trip-sync-api/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - working-directory: trip-sync-api
+      - name: Build contracts
         run: |
-          if [ -d ../trip-sync-contracts ]; then
-            npm pkg set dependencies.@trip-sync/contracts="file:../trip-sync-contracts"
+          if [ -d trip-sync-contracts ]; then
+            cd trip-sync-contracts && npm ci && npm run build
+          elif [ -d ../trip-sync-contracts ]; then
+            cd ../trip-sync-contracts && npm ci && npm run build
+          fi
+
+      - name: Install and verify
+        run: |
+          if [ -d trip-sync-contracts ]; then
+            npm pkg set dependencies.@trip-sync/contracts="file:./trip-sync-contracts"
           fi
           npm ci
           npm run db:generate
