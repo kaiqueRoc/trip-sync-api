@@ -36,9 +36,6 @@ jobs:
 
       - name: Install and verify
         run: |
-          if [ -d trip-sync-contracts ]; then
-            npm pkg set dependencies.@trip-sync/contracts="file:./trip-sync-contracts"
-          fi
           npm ci
           npm run db:generate
           npm run lint
